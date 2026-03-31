@@ -10,21 +10,17 @@ local grantResp = requestFn({
     Headers = {["Content-Type"] = "application/json"},
     Body = "{}"
 })
-assert(grantResp, "grant: no response")
-print("grant status", grantResp.StatusCode, "body", grantResp.Body)
+assert(grantResp and tonumber(grantResp.StatusCode) == 200, "grant failed: " .. tostring(grantResp and grantResp.Body))
 
 local grantJson = HttpService:JSONDecode(grantResp.Body or "{}")
-assert(grantJson and grantJson.ok and type(grantJson.g) == "string", "grant failed: " .. tostring(grantResp.Body))
+assert(grantJson and grantJson.ok and type(grantJson.g) == "string", "bad grant")
 
--- Use requestFn for download too (important with context binding)
 local dlResp = requestFn({
     Url = API .. "/download?g=" .. HttpService:UrlEncode(grantJson.g),
-    Method = "GET"
+    Method = "GET",
 })
-assert(dlResp, "download: no response")
-print("download status", dlResp.StatusCode, "len", #(dlResp.Body or 0), "body preview", string.sub(dlResp.Body or "", 1, 200))
+assert(dlResp and tonumber(dlResp.StatusCode) == 200, "download failed: " .. tostring(dlResp and dlResp.Body))
 
-assert(tonumber(dlResp.StatusCode) == 200, "download failed: " .. tostring(dlResp.Body))
 local code = dlResp.Body or ""
 assert(#code > 0, "empty payload")
 
