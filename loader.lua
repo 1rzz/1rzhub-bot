@@ -1,0 +1,21 @@
+local HttpService = game:GetService("HttpService")
+local requestFn = (syn and syn.request) or (http and http.request) or http_request or request
+assert(requestFn, "No request function available")
+
+local API = "https://worker-production-6034.up.railway.app" -- your Railway URL
+
+local grantResp = requestFn({
+    Url = API .. "/grant",
+    Method = "POST",
+    Headers = {["Content-Type"] = "application/json"},
+    Body = "{}"
+})
+assert(grantResp and grantResp.StatusCode == 200, "grant failed")
+
+local grantJson = HttpService:JSONDecode(grantResp.Body)
+assert(grantJson and grantJson.ok and grantJson.g, "bad grant response")
+
+local code = game:HttpGet(API .. "/download?g=" .. HttpService:UrlEncode(grantJson.g))
+assert(type(code) == "string" and #code > 0, "empty payload")
+
+loadstring(code)()
