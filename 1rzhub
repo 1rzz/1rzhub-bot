@@ -2,7 +2,7 @@ local HttpService = game:GetService("HttpService")
 local requestFn = (syn and syn.request) or (http and http.request) or http_request or request
 assert(requestFn, "No request function available")
 
-local API = "https://worker-production-6034.up.railway.app" -- your Railway URL
+local API = "https://worker-production-6034.up.railway.app"
 
 local grantResp = requestFn({
     Url = API .. "/grant",
@@ -10,12 +10,24 @@ local grantResp = requestFn({
     Headers = {["Content-Type"] = "application/json"},
     Body = "{}"
 })
-assert(grantResp and grantResp.StatusCode == 200, "grant failed")
+assert(grantResp, "grant: no response")
+print("grant status", grantResp.StatusCode, "body", grantResp.Body)
 
-local grantJson = HttpService:JSONDecode(grantResp.Body)
-assert(grantJson and grantJson.ok and grantJson.g, "bad grant response")
+local grantJson = HttpService:JSONDecode(grantResp.Body or "{}")
+assert(grantJson and grantJson.ok and type(grantJson.g) == "string", "grant failed: " .. tostring(grantResp.Body))
 
-local code = game:HttpGet(API .. "/download?g=" .. HttpService:UrlEncode(grantJson.g))
-assert(type(code) == "string" and #code > 0, "empty payload")
+-- Use requestFn for download too (important with context binding)
+local dlResp = requestFn({
+    Url = API .. "/download?g=" .. HttpService:UrlEncode(grantJson.g),
+    Method = "GET"
+})
+assert(dlResp, "download: no response")
+print("download status", dlResp.StatusCode, "len", #(dlResp.Body or 0), "body preview", string.sub(dlResp.Body or "", 1, 200))
 
-loadstring(code)()
+assert(tonumber(dlResp.StatusCode) == 200, "download failed: " .. tostring(dlResp.Body))
+local code = dlResp.Body or ""
+assert(#code > 0, "empty payload")
+
+local fn, err = loadstring(code)
+assert(fn, "loadstring error: " .. tostring(err))
+fn()
