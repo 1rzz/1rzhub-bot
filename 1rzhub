@@ -16,13 +16,17 @@ local bootstrapJson = HttpService:JSONDecode(bootstrapResp.Body)
 assert(
     bootstrapJson
     and bootstrapJson.ok
-    and bootstrapJson.grant_path
-    and bootstrapJson.download_path,
+    and bootstrapJson.grant_key
+    and bootstrapJson.download_key,
     "bad bootstrap response"
 )
+local grantPath = bootstrapJson[bootstrapJson.grant_key]
+local downloadPath = bootstrapJson[bootstrapJson.download_key]
+assert(type(grantPath) == "string" and #grantPath > 0, "bad grant path")
+assert(type(downloadPath) == "string" and #downloadPath > 0, "bad download path")
 
 local grantResp = requestFn({
-    Url = API .. bootstrapJson.grant_path,
+    Url = API .. grantPath,
     Method = "POST",
     Headers = {["Content-Type"] = "application/json"},
     Body = "{}"
@@ -32,7 +36,7 @@ assert(grantResp and grantResp.StatusCode == 200, "grant failed")
 local grantJson = HttpService:JSONDecode(grantResp.Body)
 assert(grantJson and grantJson.ok and grantJson.g, "bad grant response")
 
-local code = game:HttpGet(API .. bootstrapJson.download_path .. "?g=" .. HttpService:UrlEncode(grantJson.g))
+local code = game:HttpGet(API .. downloadPath .. "?g=" .. HttpService:UrlEncode(grantJson.g))
 assert(type(code) == "string" and #code > 0, "empty payload")
 
 loadstring(code)()
