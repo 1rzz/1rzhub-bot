@@ -16,12 +16,14 @@ local bootstrapJson = HttpService:JSONDecode(bootstrapResp.Body)
 assert(
     bootstrapJson
     and bootstrapJson.ok
-    and bootstrapJson.grant_key
-    and bootstrapJson.download_key,
+    and type(bootstrapJson.m) == "table"
+    and type(bootstrapJson.o) == "table"
+    and bootstrapJson.o[1]
+    and bootstrapJson.o[2],
     "bad bootstrap response"
 )
-local grantPath = bootstrapJson[bootstrapJson.grant_key]
-local downloadPath = bootstrapJson[bootstrapJson.download_key]
+local grantPath = bootstrapJson.m[bootstrapJson.o[1]]
+local downloadPath = bootstrapJson.m[bootstrapJson.o[2]]
 assert(type(grantPath) == "string" and #grantPath > 0, "bad grant path")
 assert(type(downloadPath) == "string" and #downloadPath > 0, "bad download path")
 
