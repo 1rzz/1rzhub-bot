@@ -3,9 +3,10 @@ local requestFn = (syn and syn.request) or (http and http.request) or http_reque
 assert(requestFn, "No request function available")
 
 local API = "https://worker-production-6034.up.railway.app" -- your Railway URL
+local BOOTSTRAP_PATH = "/x/s9Kp2vN4_boot"
 
 local bootstrapResp = requestFn({
-    Url = API .. "/script/bootstrap",
+    Url = API .. BOOTSTRAP_PATH,
     Method = "POST",
     Headers = {["Content-Type"] = "application/json"},
     Body = "{}"
