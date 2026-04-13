@@ -1,15 +1,3 @@
---[[
-  Anti-HttpSpy only — run this first (one loadstring). Does not touch Railway until checks pass.
-
-  On success: loadstring(game:HttpGet(LOADER_URL))()  → your loader (e.g. 1rzHub-LoaderOnly.lua raw URL).
-
-  Before running, set the raw URL to your hosted loader:
-    getgenv().BGSI_LOADER_SCRIPT_URL = "https://raw.githubusercontent.com/.../1rzHub-LoaderOnly.lua"
-
-  Or edit DEFAULT_LOADER_URL below.
-
-  getgenv().BGSI_ANTISPY_SKIP = true  → skip all checks and load the loader anyway.
-]]
 
 local DEFAULT_LOADER_URL = "" -- paste raw URL here if you do not use getgenv().BGSI_LOADER_SCRIPT_URL
 
