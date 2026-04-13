@@ -1,45 +1,110 @@
-local HttpService = game:GetService("HttpService")
+
+  On success: loadstring(game:HttpGet(LOADER_URL))()  → your loader (e.g. 1rzHub-LoaderOnly.lua raw URL).
+
+  Before running, set the raw URL to your hosted loader:
+    getgenv().BGSI_LOADER_SCRIPT_URL = "https://raw.githubusercontent.com/.../1rzHub-LoaderOnly.lua"
+
+  Or edit DEFAULT_LOADER_URL below.
+
+  getgenv().BGSI_ANTISPY_SKIP = true  → skip all checks and load the loader anyway.
+]]
+
+local DEFAULT_LOADER_URL = "" -- paste raw URL here if you do not use getgenv().BGSI_LOADER_SCRIPT_URL
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
 local requestFn = (syn and syn.request) or (http and http.request) or http_request or request
 assert(requestFn, "No request function available")
 
-local API = "https://worker-production-6034.up.railway.app" -- your Railway URL
-local BOOTSTRAP_PATH = "/x/s9Kp2vN4_boot"
+local function _hardBlock()
+    pcall(function()
+        if rconsolewarn then
+            rconsolewarn("[1rzHub] AntiHttpSpy: instrumentation detected — loader will not run.")
+        end
+    end)
+    task.spawn(function()
+        while true do
+            pcall(function()
+                if rconsoleinfo then
+                    rconsoleinfo("[1rzHub] AntiHttpSpy blocked")
+                end
+            end)
+            task.wait()
+        end
+    end)
+    while true do
+        task.wait()
+    end
+end
 
-local bootstrapResp = requestFn({
-    Url = API .. BOOTSTRAP_PATH,
-    Method = "POST",
-    Headers = {["Content-Type"] = "application/json"},
-    Body = "{}"
-})
-assert(bootstrapResp and bootstrapResp.StatusCode == 200, "bootstrap failed")
+local function _spyLikely()
+    if type(getgenv) == "function" and rawget(getgenv(), "BGSI_ANTISPY_SKIP") == true then
+        return false
+    end
 
-local bootstrapJson = HttpService:JSONDecode(bootstrapResp.Body)
-assert(
-    bootstrapJson
-    and bootstrapJson.ok
-    and type(bootstrapJson.m) == "table"
-    and type(bootstrapJson.o) == "table"
-    and bootstrapJson.o[1]
-    and bootstrapJson.o[2],
-    "bad bootstrap response"
-)
-local grantPath = bootstrapJson.m[bootstrapJson.o[1]]
-local downloadPath = bootstrapJson.m[bootstrapJson.o[2]]
-assert(type(grantPath) == "string" and #grantPath > 0, "bad grant path")
-assert(type(downloadPath) == "string" and #downloadPath > 0, "bad download path")
+    local chainRequest = false
+    local chainHttpGet = false
+    pcall(function()
+        if type(getoriginalfunction) == "function" then
+            local inner = getoriginalfunction(requestFn)
+            chainRequest = inner and type(inner) == "function" and inner ~= requestFn
+        end
+    end)
+    pcall(function()
+        if type(getoriginalfunction) == "function" then
+            local inner = getoriginalfunction(game.HttpGet)
+            chainHttpGet = inner and type(inner) == "function" and inner ~= game.HttpGet
+        end
+    end)
 
-local grantResp = requestFn({
-    Url = API .. grantPath,
-    Method = "POST",
-    Headers = {["Content-Type"] = "application/json"},
-    Body = "{}"
-})
-assert(grantResp and grantResp.StatusCode == 200, "grant failed")
+    local function recursiveStackProbe(counter, maxCount)
+        if maxCount < 19991 then
+            return recursiveStackProbe(counter, maxCount + 1)
+        end
+        return counter("Hello")
+    end
+    local okProbe, stackResult = pcall(recursiveStackProbe, requestFn, -4)
+    local stackStr = string.lower(tostring(stackResult))
+    local markerHit = false
+    if okProbe == false then
+        markerHit = string.find(stackStr, "httpspy", 1, true) ~= nil
+            or string.find(stackStr, "notdsf", 1, true) ~= nil
+            or string.find(stackStr, "not dsf", 1, true) ~= nil
+            or string.find(stackStr, "leopard-syn", 1, true) ~= nil
+            or string.find(stackStr, "http spy", 1, true) ~= nil
+    end
 
-local grantJson = HttpService:JSONDecode(grantResp.Body)
-assert(grantJson and grantJson.ok and grantJson.g, "bad grant response")
+    -- HttpSpy usually hooks both paths; executor benign wrappers often differ. Marker in traceback is strong.
+    local bothChains = chainRequest and chainHttpGet
+    if markerHit or bothChains then
+        return true
+    end
 
-local code = game:HttpGet(API .. downloadPath .. "?g=" .. HttpService:UrlEncode(grantJson.g))
-assert(type(code) == "string" and #code > 0, "empty payload")
+    -- Single-chain + weak stack hint: "hook" in error from bad request (optional, can FP)
+    if type(getgenv) == "function" and rawget(getgenv(), "BGSI_ANTISPY_AGGRESSIVE") == true then
+        if chainRequest or chainHttpGet then
+            if okProbe == false and (string.find(stackStr, "hook", 1, true) or string.find(stackStr, "__namecall", 1, true)) then
+                return true
+            end
+        end
+    end
 
-loadstring(code)()
+    return false
+end
+
+if _spyLikely() then
+    _hardBlock()
+end
+
+local loaderUrl = DEFAULT_LOADER_URL
+if type(getgenv) == "function" then
+    local u = rawget(getgenv(), "BGSI_LOADER_SCRIPT_URL")
+    if type(u) == "string" and #u > 0 then
+        loaderUrl = u
+    end
+end
+assert(type(loaderUrl) == "string" and #loaderUrl > 0, "[1rzHub] AntiHttpSpy: set getgenv().BGSI_LOADER_SCRIPT_URL or DEFAULT_LOADER_URL to your raw loader URL")
+
+loadstring(game:HttpGet(https://raw.githubusercontent.com/1rzz/1rzhub-bot/refs/heads/main/loader.lua))()
