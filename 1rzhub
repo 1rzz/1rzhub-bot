@@ -1,1 +1,55 @@
 
+--[[
+  Loader only (no anti-HttpSpy). Host this as a raw URL.
+  The anti script loadstrings this file after checks pass.
+]]
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+local HttpService = game:GetService("HttpService")
+local requestFn = (syn and syn.request) or (http and http.request) or http_request or request
+assert(requestFn, "No request function available")
+
+local API = "https://worker-production-6034.up.railway.app"
+local BOOTSTRAP_PATH = "/x/s9Kp2vN4_boot"
+
+local bootstrapResp = requestFn({
+    Url = API .. BOOTSTRAP_PATH,
+    Method = "POST",
+    Headers = { ["Content-Type"] = "application/json" },
+    Body = "{}",
+})
+assert(bootstrapResp and bootstrapResp.StatusCode == 200, "bootstrap failed")
+
+local bootstrapJson = HttpService:JSONDecode(bootstrapResp.Body)
+assert(
+    bootstrapJson
+        and bootstrapJson.ok
+        and type(bootstrapJson.m) == "table"
+        and type(bootstrapJson.o) == "table"
+        and bootstrapJson.o[1]
+        and bootstrapJson.o[2],
+    "bad bootstrap response"
+)
+local grantPath = bootstrapJson.m[bootstrapJson.o[1]]
+local downloadPath = bootstrapJson.m[bootstrapJson.o[2]]
+assert(type(grantPath) == "string" and #grantPath > 0, "bad grant path")
+assert(type(downloadPath) == "string" and #downloadPath > 0, "bad download path")
+
+local grantResp = requestFn({
+    Url = API .. grantPath,
+    Method = "POST",
+    Headers = { ["Content-Type"] = "application/json" },
+    Body = "{}",
+})
+assert(grantResp and grantResp.StatusCode == 200, "grant failed")
+
+local grantJson = HttpService:JSONDecode(grantResp.Body)
+assert(grantJson and grantJson.ok and grantJson.g, "bad grant response")
+
+local code = game:HttpGet(API .. downloadPath .. "?g=" .. HttpService:UrlEncode(grantJson.g))
+assert(type(code) == "string" and #code > 0, "empty payload")
+
+loadstring(code)()
