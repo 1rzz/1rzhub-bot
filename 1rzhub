@@ -1,4 +1,7 @@
-
+--[[
+  Loader only (no anti-HttpSpy). Host this as a raw URL.
+  The anti script loadstrings this file after checks pass.
+]]
 
 if not game:IsLoaded() then
     game.Loaded:Wait()
