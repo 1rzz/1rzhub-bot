@@ -1,3 +1,5 @@
+--[[
+  Anti-HttpSpy only — run this first (one loadstring). Does not touch Railway until checks pass.
 
   On success: loadstring(game:HttpGet(LOADER_URL))()  → your loader (e.g. 1rzHub-LoaderOnly.lua raw URL).
 
@@ -106,5 +108,5 @@ if type(getgenv) == "function" then
     end
 end
 assert(type(loaderUrl) == "string" and #loaderUrl > 0, "[1rzHub] AntiHttpSpy: set getgenv().BGSI_LOADER_SCRIPT_URL or DEFAULT_LOADER_URL to your raw loader URL")
-
+wait(0.5)
 loadstring(game:HttpGet(https://raw.githubusercontent.com/1rzz/1rzhub-bot/refs/heads/main/loader.lua))()
