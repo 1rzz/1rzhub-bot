@@ -1,5 +1,5 @@
 
-local DEFAULT_LOADER_URL = "" -- paste raw URL here if you do not use getgenv().BGSI_LOADER_SCRIPT_URL
+local DEFAULT_LOADER_URL = "https://raw.githubusercontent.com/1rzz/1rzhub-bot/refs/heads/main/loader.lua" -- paste raw URL here if you do not use getgenv().BGSI_LOADER_SCRIPT_URL
 
 if not game:IsLoaded() then
     game.Loaded:Wait()
@@ -96,5 +96,5 @@ if type(getgenv) == "function" then
     end
 end
 assert(type(loaderUrl) == "string" and #loaderUrl > 0, "[1rzHub] AntiHttpSpy: set getgenv().BGSI_LOADER_SCRIPT_URL or DEFAULT_LOADER_URL to your raw loader URL")
-wait(0.5)
-loadstring(game:HttpGet(https://raw.githubusercontent.com/1rzz/1rzhub-bot/refs/heads/main/loader.lua))()
+
+loadstring(game:HttpGet(loaderUrl))()
